@@ -4,6 +4,7 @@
 
 In this project, we aim to conduct a sentiment analysis on Twitter data. Our primary objective is to compare traditional statistical methods against modern AI/ML techniques to evaluate tweets. We plan to analyze the sentiment of tweets stored in the PostgreSQL Twitter database using different approaches and tools. 
 
+
 ### Team Members and Roles
 
 - **Owen Andreasen** 
@@ -18,9 +19,22 @@ In this project, we aim to conduct a sentiment analysis on Twitter data. Our pri
 
 This is a sentiment analysis project with a unique angle of comparing  traditional statistics and AI/ML models such as BERT transformers and LSTM networks. Our analysis will include metrics like accuracy, recall, and precision and will consider the detection of sarcasm and complex sentiments.
 
-## Resources
+## Data Source
+The Twitter data used in this project is sourced from the PostgreSQL Twitter database. The dataset contains tweets collected over a specific timeframe and stored in a structured format. Prior to analysis, the data will be preprocessed to remove noise and irrelevant information.Additionally, we are referencing the following external datasets and resources to aid our research:
 
-Our analysis will be tested on a custom dataset built using tweets from the PostgreSQL Twitter database. Additionally, we are referencing the following external datasets and resources to aid our research:
+## Methodology
+We will employ a combination of traditional statistical analysis and AI/ML techniques for sentiment analysis:
+- **Traditional Statistical Analysis**: Justin will utilize SAS and SAS Text Miner to perform statistical analysis on the Twitter data. This approach may involve lexicon-based methods and other statistical techniques.
+- **AI/ML Sentiment Analysis**: Owen will implement AI/ML models using Python and libraries such as TensorFlow, Keras, and Scikit-Learn. This approach may include using BERT transformers, LSTM networks, and other deep learning models.
+
+## Evaluation Metrics
+We will evaluate the performance of our sentiment analysis methods using the following metrics:
+- Accuracy: The proportion of correctly classified tweets.
+- Recall: The proportion of true positive tweets identified by the model.
+- Precision: The proportion of correctly classified positive tweets out of all predicted positive tweets.
+
+## Results and Discussion
+Upon completion of the sentiment analysis, we will summarize the findings and discuss the implications of the results. We will compare the performance of traditional statistical methods with AI/ML techniques, highlighting any differences in accuracy, recall, and precision. Additionally, we will explore the detection of sarcasm and complex sentiments in the Twitter data.
 
 **Datasets**
 - Twitter Sentiment Dataset [Kaggle Dataset](https://www.kaggle.com/datasets/saurabhshahane/twitter-sentiment-dataset)
