@@ -1,2 +1,4 @@
 **/.DS_Store
-Data/
+
+Data/Sentiment140.csv
+Data/Twitter_Data.csv
