@@ -37,10 +37,12 @@ We will evaluate the performance of our sentiment analysis methods using the fol
 Upon completion of the sentiment analysis, we will summarize the findings and discuss the implications of the results. We will compare the performance of traditional statistical methods with AI/ML techniques, highlighting any differences in accuracy, recall, and precision. Additionally, we will explore the detection of sarcasm and complex sentiments in the Twitter data.
 
 **Datasets**
-- Twitter Sentiment Dataset [Kaggle Dataset](https://www.kaggle.com/datasets/saurabhshahane/twitter-sentiment-dataset)
+- Twitter Sentiment Dataset (Twitter_Data) [Kaggle Dataset](https://www.kaggle.com/datasets/saurabhshahane/twitter-sentiment-dataset)
     - This dataset was a possible training dataset for positive, neutral, negative multiclass models, but the data looked low quality
 - Sentiment140 Dataset [Kaggle Dataset](https://www.kaggle.com/datasets/kazanova/sentiment140)
     - This dataset only uses positive and negative classes (no neutral), but the data looked high quality and there are a ton of rows
+- Tweet Sentiment Extraction [Kaggle Dataset](https://www.kaggle.com/competitions/tweet-sentiment-extraction/data)
+    - This dataset uses positive, negative, and neutral classes, and the data looks fairly high quality
 
 **Other Resources**
 - Twitter Sentiment Extraction Analysis [Kaggle Notebook](https://www.kaggle.com/code/tanulsingh077/twitter-sentiment-extaction-analysis-eda-and-model/notebook)
