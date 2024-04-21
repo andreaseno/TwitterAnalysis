@@ -48,5 +48,6 @@ Upon completion of the sentiment analysis, we will summarize the findings and di
 - Twitter Sentiment Extraction Analysis [Kaggle Notebook](https://www.kaggle.com/code/tanulsingh077/twitter-sentiment-extaction-analysis-eda-and-model/notebook)
 - Sentiment Analysis of Unlabelled Text Using Word2Vec Model [Stack Overflow Discussion](https://stackoverflow.com/questions/61185290/is-it-possible-to-do-sentiment-analysis-of-unlabelled-text-using-word2vec-model)
 - Emojis in Social Media Sentiment Analysis [Article](https://towardsdatascience.com/emojis-aid-social-media-sentiment-analysis-stop-cleaning-them-out-bb32a1e5fc8e)
+- Usage of SpaCy as a Text Meta Feature generator [Keggle Notebook](https://www.kaggle.com/code/shivamb/spacy-text-meta-features-knowledge-graphs)
 
 
