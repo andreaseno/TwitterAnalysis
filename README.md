@@ -17,15 +17,15 @@ In this project, we aim to conduct a sentiment analysis on Twitter data. Our pri
 
 ### Project Type
 
-This is a sentiment analysis project with a unique angle of comparing  traditional statistics and AI/ML models such as BERT transformers and LSTM networks. Our analysis will include metrics like accuracy, recall, and precision and will consider the detection of sarcasm and complex sentiments.
+This is a sentiment analysis project with a unique angle of comparing traditional statistics and AI/ML models such as BERT transformers and XGBoost. Our analysis will include metrics like accuracy, recall, and precision and will consider the detection of sarcasm and complex sentiments.
 
 ## Data Source
-The Twitter data used in this project is sourced from the PostgreSQL Twitter database. The dataset contains tweets collected over a specific timeframe and stored in a structured format. Prior to analysis, the data will be preprocessed to remove noise and irrelevant information.Additionally, we are referencing the following external datasets and resources to aid our research:
+The Twitter data used in this project is sourced from the PostgreSQL Twitter database. The dataset contains tweets collected over a specific timeframe and stored in a structured format. Prior to analysis, the data will be preprocessed to remove noise and irrelevant information. Additionally, we are referencing the following external datasets and resources to aid our research:
 
 ## Methodology
 We will employ a combination of traditional statistical analysis and AI/ML techniques for sentiment analysis:
 - **Traditional Statistical Analysis**: Justin will utilize SAS and SAS Text Miner to perform statistical analysis on the Twitter data. This approach may involve lexicon-based methods and other statistical techniques.
-- **AI/ML Sentiment Analysis**: Owen will implement AI/ML models using Python and libraries such as TensorFlow, Keras, and Scikit-Learn. This approach may include using BERT transformers, LSTM networks, and other deep learning models.
+- **AI/ML Sentiment Analysis**: Owen will implement AI/ML models using Python and libraries such as TensorFlow, Keras, and Scikit-Learn. This approach may include using BERT transformers and feeding their embeddings into an XGBoost Model.
 
 ## Evaluation Metrics
 We will evaluate the performance of our sentiment analysis methods using the following metrics:
@@ -43,12 +43,25 @@ Upon completion of the sentiment analysis, we will summarize the findings and di
     - This dataset only uses positive and negative classes (no neutral), but the data looked high quality and there are a ton of rows
 - Tweet Sentiment Extraction [Kaggle Dataset](https://www.kaggle.com/competitions/tweet-sentiment-extraction/data)
     - This dataset uses positive, negative, and neutral classes, and the data looks fairly high quality
+- MultiClassLabeledCustomTwitterSentiments.csv
+    - Labeled "Gold Standard" dataset created for analysis in SentimentAnalysis.ipynb
+- BinaryLabeledCustomTwitterSentiments.csv
+    - Binary version of MultiClassLabeledCustomTwitterSentiments in case I wanted to use it instead
+- CustomTwitterSentiments.csv
+    - MultiClassLabeledCustomTwitterSentiments before I hand labeled the data
+- MultiClassLabeledCombined.csv
+    - Experimental dataset curated by combining MultiClassLabeledCustomTwitterSentiments with data from the Tweet Sentiment Extraction dataset. 
 
 **Other Resources**
 - Twitter Sentiment Extraction Analysis [Kaggle Notebook](https://www.kaggle.com/code/tanulsingh077/twitter-sentiment-extaction-analysis-eda-and-model/notebook)
 - Twitter Sentiment Analysis with BERT vs RoBERTa [Kaggle Notebook](https://www.kaggle.com/code/ludovicocuoghi/twitter-sentiment-analysis-with-bert-vs-roberta/notebook)
 - Sentiment Analysis of Unlabelled Text Using Word2Vec Model [Stack Overflow Discussion](https://stackoverflow.com/questions/61185290/is-it-possible-to-do-sentiment-analysis-of-unlabelled-text-using-word2vec-model)
 - Emojis in Social Media Sentiment Analysis [Article](https://towardsdatascience.com/emojis-aid-social-media-sentiment-analysis-stop-cleaning-them-out-bb32a1e5fc8e)
-- Usage of SpaCy as a Text Meta Feature generator [Keggle Notebook](https://www.kaggle.com/code/shivamb/spacy-text-meta-features-knowledge-graphs)
+- Usage of SpaCy as a Text Meta Feature generator [Kaggle Notebook](https://www.kaggle.com/code/shivamb/spacy-text-meta-features-knowledge-graphs)
 
+**Files**
+- SentimentAnalysis.ipynb: File to perform sentiment analysis
+- TestData.ipynb: File to create the custom dataset from PostgreSQL
+- CountRows.py: Helper file to count CSV file lines, since some entries are multirow
+- AppendRows.py: Helper file to combine csv files. Used to create MultiClassLabeledCombined.csv
 
