@@ -3,17 +3,28 @@ import pandas as pd
 
 # Data to be written to the CSV file
 data = pd.read_csv('Data/TweetSentimentExtraction.csv', encoding='utf-8')
+# data = data.iloc[:600]
+print(data)
 
-# Fieldnames in the order you want them to appear in the CSV
-fieldnames = ['Name', 'Age', 'Job']
+# csv_file = pd.read_csv('Data/MultiClassLabeledCustomTwitterSentiments.csv')
 
-# Writing to a CSV file
-with open('people.csv', 'w', newline='') as file:
-    writer = csv.DictWriter(file, fieldnames=fieldnames)
+data = data.rename(columns={'sentiment': 'target'})
 
-    # Writing the header (fieldnames)
-    writer.writeheader()
+data = data.drop(columns=['textID', 'selected_text'])
 
-    # Writing data rows
-    for row in data:
-        writer.writerow(row)
+sentiment_mapping = {
+    'negative': 0,
+    'neutral': 2,
+    'positive': 4
+}
+
+data['target'] = data['target'].replace(sentiment_mapping)
+
+
+# df_combined = pd.concat([csv_file, data], ignore_index=True)
+
+# print(df_combined)
+
+data.to_csv('Data/test.csv', index=False, encoding='utf-8')
+
+
