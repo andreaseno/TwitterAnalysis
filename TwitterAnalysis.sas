@@ -152,12 +152,8 @@ data frequent_terms_pivoted;
     by word;
 
     length sentiment_positive sentiment_neutral sentiment_negative dominant_sentiment $8;
-
+	retain sentiment_positive sentiment_neutral sentiment_negative;
     /* Initialize the variables */
-    sentiment_positive = 0;
-    sentiment_neutral = 0;
-    sentiment_negative = 0;
-
     if first.word then do;
         sentiment_positive = 0;
         sentiment_neutral = 0;
@@ -169,21 +165,29 @@ data frequent_terms_pivoted;
     else if sentiment = "neutral" then sentiment_neutral = sentiment_neutral + 1;
     else if sentiment = "negative" then sentiment_negative = sentiment_negative + 1;
 	
+	put word=;
+	put sentiment_positive=;
+	put sentiment_neutral=;
+	put sentiment_negative=;
+
+
+    /* Output the result for each observation */
     if last.word then do;
-    	if count >= 10 then
-    		dominant_sentiment = 'PSW';
+        if count >= 30 then
+            dominant_sentiment = 'PSW';
         /* Determine the dominant sentiment */
         else if sentiment_positive > sentiment_neutral and sentiment_positive > sentiment_negative then
-        	dominant_sentiment = 'positive';
-    	else if sentiment_neutral > sentiment_positive and sentiment_neutral > sentiment_negative then
-        	dominant_sentiment = 'neutral';
-    	else if sentiment_negative > sentiment_positive and sentiment_negative > sentiment_neutral then
-        	dominant_sentiment = 'negative';
-    	else
-        	dominant_sentiment = 'neutral'; /* If multiple sentiments or all sentiments */
+            dominant_sentiment = 'positive';
+        else if sentiment_neutral > sentiment_positive and sentiment_neutral > sentiment_negative then
+            dominant_sentiment = 'neutral';
+        else if sentiment_negative > sentiment_positive and sentiment_negative > sentiment_neutral then
+            dominant_sentiment = 'negative';
+        else
+            dominant_sentiment = 'neutral'; /* If multiple sentiments or all sentiments */
     
         output;
     end;
+run;
 
 /*     drop sentiment_positive sentiment_neutral sentiment_negative; */
 run;
@@ -412,31 +416,49 @@ run;
 
 /* INPUTTTT____________________+====----------------------------- */
 /* Input sentence */
-%let input_sentence = "Just spilled my coffee all over my white shirt. Great start to the day! Can't wait to see what other surprises are in store for me.";
+%let input_sentence = "Muslim woman in Hijab makes valid points and audience members tell her to calm down Funny that Muslim woman who doesnt…";
+data newText;
+    /* Preprocessing steps */
+    text = prxchange('s/[[:punct:]]|https?:\/\/[[:alnum:].\/?&_=-]+//', -1, &input_sentence);
+    text = prxchange('s/#\w+//', -1, text);
+    text = prxchange('s/[^[:alnum:]\s]//', -1, text);
+    text = prxchange('s/\s{2,}//', -1, text);
+run;
+
 data result;
     length sentiment_positive sentiment_neutral sentiment_negative $8;
-    
+    retain sentiment_positive sentiment_neutral sentiment_negative;
     /* Initialize sentiment counts */
     sentiment_positive = 0;
     sentiment_neutral = 0;
     sentiment_negative = 0;
+    
+    /* Set the text field */
+    set newText;
 
     /* Tokenize the text */
-    do i = 1 to countw(input_sentence);
-        word = scan(input_sentence, i);
-        
+    do i = 1 to countw(text);
+        word = scan(text, i);
+
+        /* Print each word */
+        put word=;
+
         /* Check if the word exists in the bag-of-words */
         if word ne '' then do;
-            set frequent_terms_pivoted (keep=word dominant_sentiment) point=_n_;
-            if word = word then do;
-                /* Increment corresponding sentiment count */
-                if dominant_sentiment = 'positive' then sentiment_positive = sentiment_positive + 1;
-                else if dominant_sentiment = 'neutral' then sentiment_neutral = sentiment_neutral + 1;
-                else if dominant_sentiment = 'negative' then sentiment_negative = sentiment_negative + 1;
+            set frequent_terms_pivoted (keep=word dominant_sentiment) point=_n_ nobs=numobs;
+            do j = 1 to numobs until(found);
+                if word = word then do;
+                    /* Increment corresponding sentiment count */
+                    if dominant_sentiment = 'positive' then sentiment_positive = sentiment_positive + 1;
+                    else if dominant_sentiment = 'neutral' then sentiment_neutral = sentiment_neutral + 1;
+                    else if dominant_sentiment = 'negative' then sentiment_negative = sentiment_negative + 1;
+                    found = 1;
+                end;
             end;
+            put "Sentiment of &word is " dominant_sentiment;
         end;
     end;
-    
+
     /* Determine the dominant sentiment */
     if sentiment_positive > sentiment_neutral and sentiment_positive > sentiment_negative then
         dominant_sentiment = 'positive';
@@ -446,10 +468,52 @@ data result;
         dominant_sentiment = 'negative';
     else
         dominant_sentiment = 'neutral'; /* If multiple sentiments or all sentiments */
-    
+
     /* Output the result */
     output;
 
     /* Reset variables for the next observation */
-    drop i word sentiment_positive sentiment_neutral sentiment_negative;
+    drop i j word sentiment_positive sentiment_neutral sentiment_negative;
 run;
+
+
+/* data result; */
+/*     length sentiment_positive sentiment_neutral sentiment_negative $8; */
+/*      */
+/*     Initialize sentiment counts */
+/*     sentiment_positive = 0; */
+/*     sentiment_neutral = 0; */
+/*     sentiment_negative = 0; */
+/*  */
+/*     Tokenize the text */
+/*     do i = 1 to countw(&input_sentence); */
+/*         word = scan(&input_sentence, i); */
+/*          */
+/*         Check if the word exists in the bag-of-words */
+/*         if word ne '' then do; */
+/*             set frequent_terms_pivoted (keep=word dominant_sentiment) point=_n_; */
+/*             if word = word then do; */
+/*                 Increment corresponding sentiment count */
+/*                 if dominant_sentiment = 'positive' then sentiment_positive = sentiment_positive + 1; */
+/*                 else if dominant_sentiment = 'neutral' then sentiment_neutral = sentiment_neutral + 1; */
+/*                 else if dominant_sentiment = 'negative' then sentiment_negative = sentiment_negative + 1; */
+/*             end; */
+/*         end; */
+/*     end; */
+/*      */
+/*     Determine the dominant sentiment */
+/*     if sentiment_positive > sentiment_neutral and sentiment_positive > sentiment_negative then */
+/*         dominant_sentiment = 'positive'; */
+/*     else if sentiment_neutral > sentiment_positive and sentiment_neutral > sentiment_negative then */
+/*         dominant_sentiment = 'neutral'; */
+/*     else if sentiment_negative > sentiment_positive and sentiment_negative > sentiment_neutral then */
+/*         dominant_sentiment = 'negative'; */
+/*     else */
+/*         dominant_sentiment = 'neutral'; /* If multiple sentiments or all sentiments */
+/*      */
+/*     Output the result */
+/*     output; */
+/*  */
+/*     Reset variables for the next observation */
+/*     drop i word sentiment_positive sentiment_neutral sentiment_negative; */
+/* run; */
