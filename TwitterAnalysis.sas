@@ -20,31 +20,32 @@ data trainDataCleaned;
     
     /* Other preprocessing steps */
     /* For example, remove punctuation, links, hashtags, illegal characters, and back-to-back spaces */
-    text = prxchange('s/[[:punct:]]|https?:\/\/[[:alnum:].\/?&_=-]+//', -1, text);
-    text = prxchange('s/#\w+//', -1, text);
-    text = prxchange('s/[^[:alnum:]\s]//', -1, text);
-    text = prxchange('s/\s{2,}//', -1, text);
-run;
-proc print data = trainDataCleaned(obs=100);
+    selected_text = prxchange('s/[[:punct:]]|https?:\/\/[[:alnum:].\/?&_=-]+//', -1, selected_text);
+    selected_text = prxchange('s/#\w+//', -1, selected_text);
+    selected_text = prxchange('s/[^[:alnum:]\s]//', -1, selected_text);
+    selected_text = prxchange('s/\s{2,}//', -1, selected_text);
 run;
 
-%let text_len_threshhold = 3;
+proc print data = trainDataCleaned(obs=10);
+run;
+
+%let text_len_threshhold = 20;
 
 /* Step 1: Calculate text length */
 data MultiClassTrain;
     set trainDataCleaned;
     length text_len 8;
-    text_len = countw(text);
+    text_len = countw(selected_text);
 run;
 
 /* Step 2: Filter out tweets with text length <= threshold */
 data MultiClassTrain_filtered;
     set MultiClassTrain;
-    where text_len <= &text_len_threshhold;
+    where text_len > &text_len_threshhold;
 run;
 
 /* Display dataset information */
-proc print data = MultiClassTrain_filtered;
+proc contents data = MultiClassTrain_filtered;
 run;
 
 /* Plot the count of tweets with <= text_len_threshhold words */
@@ -52,7 +53,7 @@ proc sgplot data=MultiClassTrain_filtered;
     vbar text_len / datalabel;
     xaxis label="Number of Words in Tweet";
     yaxis label="Count of Tweets";
-    title "Number of Words in Every Tweet With <= &text_len_threshhold Total Words";
+    title "Number of Words in Every Tweet With > &text_len_threshhold Total Words";
 run;
 
 /* Print total count of rows */
@@ -66,7 +67,7 @@ quit;
 /*  */
 data MultiClassTrainFiltered;
     set MultiClassTrain;
-    where text_len > &text_len_threshhold;
+    where text_len <= &text_len_threshhold;
 run;
 
 proc sql noprint;
@@ -76,9 +77,9 @@ quit;
 %put Total Rows: &total_obs_filtered;
 
 
-/* proc print data = MultiClassTrainFiltered; */
-/* run; */
-
+data MultiClassTrainFiltered;
+	set MultiClassTrain;
+run;
 
 
 /* Plot the distribution of token counts */
@@ -96,7 +97,7 @@ proc surveyselect data=MultiClassTrainFiltered
                 outhits
                 seed=12345
                 out=train_os
-                sampsize=400; /* Specify the sample size */
+                sampsize=1000; /* Specify the sample size */
     strata sentiment;
 run;
 
@@ -108,11 +109,11 @@ data tokens;
     set train_os;
     length word $50.;
     retain word;
-    do i = 1 to countw(text);
-        word = scan(text, i);
+    do i = 1 to countw(selected_text);
+        word = scan(selected_text, i);
         if not anydigit(word) then output;
     end;
-    keep word text sentiment;
+    keep word selected_text sentiment;
 run;
 
 /* Step 2: Create a vocabulary table with distinct tokens */
@@ -138,7 +139,7 @@ data frequent_terms;
 run;
 
 /* Print the first few observations of the frequent_terms dataset */
-proc print data=frequent_terms(obs=10);
+proc print data=frequent_terms(obs=100);
 run;
 
 /* Step 5: Pivot the frequent_terms dataset to have one column for every word indicating the sentiment it belongs to */
@@ -167,22 +168,28 @@ data frequent_terms_pivoted;
     if sentiment = "positive" then sentiment_positive = sentiment_positive + 1;
     else if sentiment = "neutral" then sentiment_neutral = sentiment_neutral + 1;
     else if sentiment = "negative" then sentiment_negative = sentiment_negative + 1;
-
+	
     if last.word then do;
+    	if count >= 10 then
+    		dominant_sentiment = 'PSW';
         /* Determine the dominant sentiment */
-        if sentiment_positive > 0 and sentiment_neutral = 0 and sentiment_negative = 0 then
-            dominant_sentiment = 'positive';
-        else if sentiment_neutral > 0 and sentiment_positive = 0 and sentiment_negative = 0 then
-            dominant_sentiment = 'neutral';
-        else if sentiment_negative > 0 and sentiment_positive = 0 and sentiment_neutral = 0 then
-            dominant_sentiment = 'negative';
-        else
-            dominant_sentiment = 'neutral'; /* If multiple sentiments or all sentiments */
-
+        else if sentiment_positive > sentiment_neutral and sentiment_positive > sentiment_negative then
+        	dominant_sentiment = 'positive';
+    	else if sentiment_neutral > sentiment_positive and sentiment_neutral > sentiment_negative then
+        	dominant_sentiment = 'neutral';
+    	else if sentiment_negative > sentiment_positive and sentiment_negative > sentiment_neutral then
+        	dominant_sentiment = 'negative';
+    	else
+        	dominant_sentiment = 'neutral'; /* If multiple sentiments or all sentiments */
+    
         output;
     end;
 
-    drop sentiment_positive sentiment_neutral sentiment_negative;
+/*     drop sentiment_positive sentiment_neutral sentiment_negative; */
+run;
+
+proc freq data=frequent_terms_pivoted;
+    tables dominant_sentiment / nocum nocol;
 run;
 
 
@@ -239,7 +246,6 @@ run;
 
 
 /* --------------------------- */
-
 /* Import the test dataset */
 proc import datafile='/home/u63761698/databaseProject/MultiClassLabeledCustomTwitterSentiments.csv' out=testData dbms=csv replace;
 run;
@@ -253,8 +259,7 @@ data testDataCleaned;
     text = prxchange('s/[^[:alnum:]\s]//', -1, text);
     text = prxchange('s/\s{2,}//', -1, text);
 run;
-proc print data=testDataCleaned;
-run;
+
 /* Use the bag-of-words from frequent_terms_pivoted to classify sentiments in testDataCleaned */
 data testData_with_sentiment;
     set testDataCleaned;
@@ -295,23 +300,11 @@ data testData_with_sentiment;
     drop i word sentiment_positive sentiment_neutral sentiment_negative;
 run;
 
-
-
-/* Print the first few observations of testData_with_sentiment */
-proc print data=testData_with_sentiment(obs=10);
-run;
-
+/* Calculate accuracy */
 data testData_with_sentiment_acc;
     set testData_with_sentiment;
 
-    /* Calculate accuracy */
-    if dominant_sentiment = sentiment then
-        accuracy = 1; /* Correct prediction */
-    else
-        accuracy = 0; /* Incorrect prediction */
-
-    /* Drop unnecessary variables */
-    drop _n_;
+    accuracy = (dominant_sentiment = sentiment); /* Correct prediction is 1, incorrect prediction is 0 */
 run;
 
 /* Calculate total accuracy */
@@ -322,8 +315,141 @@ run;
 
 /* Display total accuracy */
 proc print data=accuracy_summary;
-    var accuracy total_count;
+    var _freq_ accuracy total_count;
     format accuracy percent8.2;
 run;
 
+proc sql;
+    create table sentiment_metrics as
+    select 
+        'Positive' as sentiment,
+        /* Precision */
+        sum(case when dominant_sentiment='positive' and sentiment='positive' then 1 else 0 end) /
+        sum(case when dominant_sentiment='positive' then 1 else 0 end) as precision,
+        
+        /* Recall */
+        sum(case when dominant_sentiment='positive' and sentiment='positive' then 1 else 0 end) /
+        sum(case when sentiment='positive' then 1 else 0 end) as recall,
+        
+        /* F-measure */
+        (2 * sum(case when dominant_sentiment='positive' and sentiment='positive' then 1 else 0 end) /
+             sum(case when dominant_sentiment='positive' then 1 else 0 end) *
+         sum(case when dominant_sentiment='positive' and sentiment='positive' then 1 else 0 end) /
+             sum(case when sentiment='positive' then 1 else 0 end)) /
+        (sum(case when dominant_sentiment='positive' and sentiment='positive' then 1 else 0 end) /
+             sum(case when dominant_sentiment='positive' then 1 else 0 end) +
+         sum(case when dominant_sentiment='positive' and sentiment='positive' then 1 else 0 end) /
+             sum(case when sentiment='positive' then 1 else 0 end)) as f_measure
+    from testData_with_sentiment_acc
 
+    union all
+
+    select 
+        'Negative' as sentiment,
+        /* Precision */
+        sum(case when dominant_sentiment='negative' and sentiment='negative' then 1 else 0 end) /
+        sum(case when dominant_sentiment='negative' then 1 else 0 end) as precision,
+        
+        /* Recall */
+        sum(case when dominant_sentiment='negative' and sentiment='negative' then 1 else 0 end) /
+        sum(case when sentiment='negative' then 1 else 0 end) as recall,
+        
+        /* F-measure */
+        (2 * sum(case when dominant_sentiment='negative' and sentiment='negative' then 1 else 0 end) /
+             sum(case when dominant_sentiment='negative' then 1 else 0 end) *
+         sum(case when dominant_sentiment='negative' and sentiment='negative' then 1 else 0 end) /
+             sum(case when sentiment='negative' then 1 else 0 end)) /
+        (sum(case when dominant_sentiment='negative' and sentiment='negative' then 1 else 0 end) /
+             sum(case when dominant_sentiment='negative' then 1 else 0 end) +
+         sum(case when dominant_sentiment='negative' and sentiment='negative' then 1 else 0 end) /
+             sum(case when sentiment='negative' then 1 else 0 end)) as f_measure
+    from testData_with_sentiment_acc
+
+    union all
+
+    select 
+        'Neutral' as sentiment,
+        /* Precision */
+        sum(case when dominant_sentiment='neutral' and sentiment='neutral' then 1 else 0 end) /
+        sum(case when dominant_sentiment='neutral' then 1 else 0 end) as precision,
+        
+        /* Recall */
+        sum(case when dominant_sentiment='neutral' and sentiment='neutral' then 1 else 0 end) /
+        sum(case when sentiment='neutral' then 1 else 0 end) as recall,
+        
+        /* F-measure */
+        (2 * sum(case when dominant_sentiment='neutral' and sentiment='neutral' then 1 else 0 end) /
+             sum(case when dominant_sentiment='neutral' then 1 else 0 end) *
+         sum(case when dominant_sentiment='neutral' and sentiment='neutral' then 1 else 0 end) /
+             sum(case when sentiment='neutral' then 1 else 0 end)) /
+        (sum(case when dominant_sentiment='neutral' and sentiment='neutral' then 1 else 0 end) /
+             sum(case when dominant_sentiment='neutral' then 1 else 0 end) +
+         sum(case when dominant_sentiment='neutral' and sentiment='neutral' then 1 else 0 end) /
+             sum(case when sentiment='neutral' then 1 else 0 end)) as f_measure
+    from testData_with_sentiment_acc;
+quit;
+
+proc print data=sentiment_metrics;
+    title 'Sentiment Metrics';
+run;
+
+/* Calculate confusion matrix */
+proc freq data=testData_with_sentiment_acc;
+    tables dominant_sentiment*sentiment / nocum norow nocol nopercent out=confusion_matrix;
+run;
+
+/* Plot confusion matrix as heatmap */
+proc sgplot data=confusion_matrix;
+    heatmap x=dominant_sentiment y=sentiment / response=count colormodel=(CXFFFFFF CXCCCCFF CXFFFFCC CXFFCCCC);
+    xaxis discreteorder=data;
+    yaxis discreteorder=data;
+    keylegend / title='Count';
+    title 'Confusion Matrix';
+run;
+
+
+
+
+/* INPUTTTT____________________+====----------------------------- */
+/* Input sentence */
+%let input_sentence = "Just spilled my coffee all over my white shirt. Great start to the day! Can't wait to see what other surprises are in store for me.";
+data result;
+    length sentiment_positive sentiment_neutral sentiment_negative $8;
+    
+    /* Initialize sentiment counts */
+    sentiment_positive = 0;
+    sentiment_neutral = 0;
+    sentiment_negative = 0;
+
+    /* Tokenize the text */
+    do i = 1 to countw(input_sentence);
+        word = scan(input_sentence, i);
+        
+        /* Check if the word exists in the bag-of-words */
+        if word ne '' then do;
+            set frequent_terms_pivoted (keep=word dominant_sentiment) point=_n_;
+            if word = word then do;
+                /* Increment corresponding sentiment count */
+                if dominant_sentiment = 'positive' then sentiment_positive = sentiment_positive + 1;
+                else if dominant_sentiment = 'neutral' then sentiment_neutral = sentiment_neutral + 1;
+                else if dominant_sentiment = 'negative' then sentiment_negative = sentiment_negative + 1;
+            end;
+        end;
+    end;
+    
+    /* Determine the dominant sentiment */
+    if sentiment_positive > sentiment_neutral and sentiment_positive > sentiment_negative then
+        dominant_sentiment = 'positive';
+    else if sentiment_neutral > sentiment_positive and sentiment_neutral > sentiment_negative then
+        dominant_sentiment = 'neutral';
+    else if sentiment_negative > sentiment_positive and sentiment_negative > sentiment_neutral then
+        dominant_sentiment = 'negative';
+    else
+        dominant_sentiment = 'neutral'; /* If multiple sentiments or all sentiments */
+    
+    /* Output the result */
+    output;
+
+    /* Reset variables for the next observation */
+    drop i word sentiment_positive sentiment_neutral sentiment_negative;
+run;
